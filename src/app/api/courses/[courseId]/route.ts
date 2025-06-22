@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { courseId: string } }
+  context: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { courseId } = params;
+    const { courseId } = await context.params;
 
     if (!ObjectId.isValid(courseId)) {
       return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
@@ -44,7 +44,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { courseId: string } }
+  context: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -52,7 +52,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { courseId } = params;
+    const { courseId } = await context.params;
     const { is_public } = await request.json();
 
     if (!ObjectId.isValid(courseId)) {
@@ -97,7 +97,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { courseId: string } }
+  context: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -105,7 +105,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { courseId } = params;
+    const { courseId } = await context.params;
 
     if (!ObjectId.isValid(courseId)) {
       return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
