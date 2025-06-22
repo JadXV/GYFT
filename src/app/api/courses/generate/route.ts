@@ -57,9 +57,10 @@ export async function POST(request: NextRequest) {
 
     // Store course in database
     const courses = await getCoursesCollection();
+    const fullName = `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim();
     const courseDocument = {
       user_id: new ObjectId(session.user.id),
-      author_name: `${session.user.firstName} ${session.user.lastName}`,
+      author_name: fullName || session.user.username || 'Anonymous',
       author_username: session.user.username,
       title: courseData.t || 'Untitled Course',
       description: courseData.d || '',

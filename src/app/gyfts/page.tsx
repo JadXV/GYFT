@@ -303,133 +303,101 @@ export default function GyftsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-4 text-sm text-[#919191]">
                       <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>{course.author_name || "Anonymous"}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>{formatDate(course.created_at)}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="px-2 py-1 bg-blue-600 text-white rounded text-xs">
-                        {course.language}
-                      </span>
-                      <span className="text-[#919191]">
-                        {course.chapters?.length || 0} chapters
-                      </span>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 bg-blue-600 text-white rounded text-xs">
+                          {course.language}
+                        </span>
+                        <span className="text-[#919191]">
+                          {course.chapters?.length || 0} chapters
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[#919191]">
+                        <Download className="h-4 w-4" />
+                        <span>{course.install_count || 0}</span>
+                      </div>
                     </div>
 
-                    {/* Stats and Like Button */}
-                    <div className="flex items-center justify-between pt-2 border-t border-[#535353] mb-4">
-                      <div className="flex items-center gap-4 text-sm text-[#919191]">
-                        <div className="flex items-center gap-1">
-                          <Download className="h-4 w-4" />
-                          <span>{course.install_count || 0}</span>
-                        </div>
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between pt-3">
+                      <div className="flex gap-2 flex-1">
+                        {isUserOwned(course) ? (
+                          <Button
+                            onClick={() => router.push(`/course/${getUserCourseId(course)}`)}
+                            size="sm"
+                            variant="primary"
+                            className="flex-1"
+                          >
+                            <ExternalLink className="mr-1 h-3 w-3" />
+                            Open Course
+                          </Button>
+                        ) : isUserHasCourse(course) ? (
+                          <>
+                            <Button
+                              onClick={() => router.push(`/course/${getUserCourseId(course)}`)}
+                              size="sm"
+                              variant="primary"
+                              className="flex-1"
+                            >
+                              <ExternalLink className="mr-1 h-3 w-3" />
+                              Open
+                            </Button>
+                            <Button
+                              onClick={() => removeCourse(course._id!)}
+                              disabled={installing === course._id}
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              onClick={() => peekCourse(course._id!)}
+                              disabled={loadingPeek}
+                              size="sm"
+                              variant="outline"
+                            >
+                              <Eye className="mr-1 h-3 w-3" />
+                              Preview
+                            </Button>
+                            <Button
+                              onClick={() => getCourse(course._id!)}
+                              disabled={installing === course._id}
+                              size="sm"
+                              variant="primary"
+                              className="flex-1"
+                            >
+                              {installing === course._id ? "Getting..." : "Get Course"}
+                            </Button>
+                          </>
+                        )}
                       </div>
                       
-                      {/* Unified Heart Button with Count */}
+                      {/* Like Button */}
                       <Button
                         onClick={() => toggleLike(course._id!)}
                         disabled={liking === course._id}
                         variant="ghost"
                         size="sm"
-                        className={`flex items-center gap-1 px-3 py-2 rounded-md transition-colors ${
+                        className={`ml-2 px-2 ${
                           isLiked(course)
-                            ? "text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20"
-                            : "text-[#919191] hover:text-red-500 hover:bg-red-500/10"
+                            ? "text-red-500 hover:text-red-400"
+                            : "text-[#919191] hover:text-red-500"
                         }`}
                       >
                         <Heart 
                           className={`h-4 w-4 ${isLiked(course) ? "fill-current" : ""}`}
                         />
-                        <span className="text-sm font-medium">{course.like_count || 0}</span>
+                        <span className="ml-1 text-xs">{course.like_count || 0}</span>
                       </Button>
-                    </div>
-
-                    {/* Action Buttons at Bottom */}
-                    <div className="flex gap-2">
-                      {isUserOwned(course) ? (
-                        // Settings dropdown for user's own courses
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1"
-                            >
-                              <Settings className="mr-2 h-4 w-4" />
-                              Manage
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-black border-[#535353]">
-                            <DropdownMenuItem 
-                              onClick={() => router.push(`/course/${getUserCourseId(course)}`)}
-                              className="text-white hover:bg-gray-900"
-                            >
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              Jump to course
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        // Action buttons for other users' courses
-                        <>
-                          {isUserHasCourse(course) ? (
-                            <>
-                              <Button
-                                onClick={() => peekCourse(course._id!)}
-                                disabled={loadingPeek}
-                                size="sm"
-                                variant="outline"
-                              >
-                                <Eye className="mr-1 h-3 w-3" />
-                                {loadingPeek ? "..." : "Peek"}
-                              </Button>
-                              <Button
-                                onClick={() => router.push(`/course/${getUserCourseId(course)}`)}
-                                size="sm"
-                                variant="primary"
-                                className="flex-1"
-                              >
-                                <ExternalLink className="mr-1 h-3 w-3" />
-                                Open Course
-                              </Button>
-                              <Button
-                                onClick={() => removeCourse(course._id!)}
-                                disabled={installing === course._id}
-                                size="sm"
-                                variant="destructive"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button
-                                onClick={() => peekCourse(course._id!)}
-                                disabled={loadingPeek}
-                                size="sm"
-                                variant="outline"
-                              >
-                                <Eye className="mr-1 h-3 w-3" />
-                                {loadingPeek ? "..." : "Peek"}
-                              </Button>
-                              <Button
-                                onClick={() => getCourse(course._id!)}
-                                disabled={installing === course._id}
-                                size="sm"
-                                variant="primary"
-                                className="flex-1"
-                              >
-                                {installing === course._id ? "Getting..." : "Get Course"}
-                              </Button>
-                            </>
-                          )}
-                        </>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -493,10 +461,6 @@ export default function GyftsPage() {
                 
                 <div className="flex items-center gap-4 text-sm text-[#919191]">
                   <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    <span>{peekingCourse.author_name || "Anonymous"}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     <span>{formatDate(peekingCourse.created_at)}</span>
                   </div>
@@ -537,7 +501,7 @@ export default function GyftsPage() {
               )}
 
               {/* Stats */}
-              <div className="flex items-center gap-6 text-sm text-[#919191] pt-4 border-t border-[#535353]">
+              <div className="flex items-center gap-6 text-sm text-[#919191] pt-4">
                 <div className="flex items-center gap-1">
                   <Download className="h-4 w-4" />
                   <span>{peekingCourse.install_count || 0} installs</span>
