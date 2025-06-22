@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ course.title }} - GYFT</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; max-width: 1000px; margin: 40px auto; }
+        h1 { color: #333; margin-bottom: 10px; }
+        .course-header { 
+            background: #f8f9fa; padding: 20px; border-radius: 8px; 
+            margin-bottom: 30px; border-left: 4px solid #007bff; 
+        }
+        .course-meta { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 15px; font-size: 14px; color: #666; 
+        }
+        .course-language { 
+            background: #007bff; color: white; padding: 4px 12px; 
+            border-radius: 20px; font-size: 12px; text-transform: uppercase; 
+        }
+        .course-description { 
+            color: #666; line-height: 1.6; font-size: 16px; margin: 15px 0; 
+        }
+        .chapters-section { margin-top: 30px; }
+        .chapter { 
+            background: white; border: 1px solid #ddd; border-radius: 8px; 
+            margin-bottom: 20px; overflow: hidden; 
+        }
+        .chapter-header { 
+            background: #f1f3f4; padding: 15px; border-bottom: 1px solid #ddd; 
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center; 
+        }
+        .chapter-header:hover { background: #e9ecef; }
+        .chapter-title { font-weight: bold; color: #333; margin: 0; }
+        .chapter-toggle { font-size: 18px; color: #666; }
+        .chapter-content { padding: 20px; display: none; }
+        .chapter-content.active { display: block; }
+        .chapter-description { 
+            color: #666; line-height: 1.6; margin-bottom: 20px; 
+            padding: 15px; background: #f8f9fa; border-radius: 4px; 
+        }
+        .sections { margin-top: 15px; }
+        .section { 
+            background: #fafafa; border: 1px solid #e9ecef; 
+            border-radius: 6px; margin-bottom: 15px; padding: 15px; 
+        }
+        .section-title { font-weight: bold; color: #333; margin-bottom: 8px; }
+        .section-content { color: #666; line-height: 1.5; }
+        .back-link { 
+            display: inline-block; margin-bottom: 20px; padding: 8px 16px; 
+            background: #6c757d; color: white; text-decoration: none; 
+            border-radius: 4px; font-size: 14px; 
+        }
+        .back-link:hover { background: #545b62; }
+        .no-chapters { 
+            text-align: center; color: #666; padding: 40px; 
+            background: #f8f9fa; border-radius: 8px; 
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Home</a>
+    
+    <div class="course-header">
+        <div class="course-meta">
+            <span class="course-language">{{ course.language or 'General' }}</span>
+            <span>Created {{ course.created_at.strftime('%B %d, %Y') }}</span>
+        </div>
+        <h1>{{ course.title }}</h1>
+        <div class="course-description">{{ course.description }}</div>
+    </div>
+    
+    <div class="chapters-section">
+        <h2>Course Content</h2>
+        {% if course.chapters %}
+            {% for chapter in course.chapters %}
+                <div class="chapter">
+                    <div class="chapter-header" onclick="toggleChapter('{{ loop.index0 }}')">
+                        <h3 class="chapter-title">{{ chapter.n }}</h3>
+                        <span class="chapter-toggle" id="toggle-{{ loop.index0 }}">+</span>
+                    </div>
+                    <div class="chapter-content" id="chapter-{{ loop.index0 }}">
+                        <div class="chapter-description">{{ chapter.d }}</div>
+                        {% if chapter.s %}
+                            <div class="sections">
+                                <h4>Sections:</h4>
+                                {% for section in chapter.s %}
+                                    <div class="section">
+                                        <div class="section-title">{{ section.t }}</div>
+                                        <div class="section-content">{{ section.c }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-chapters">
+                <p>No course content available.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        function toggleChapter(index) {
+            const content = document.getElementById(`chapter-${index}`);
+            const toggle = document.getElementById(`toggle-${index}`);
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                toggle.textContent = '+';
+            } else {
+                content.classList.add('active');
+                toggle.textContent = '−';
+            }
+        }
+        
+        // Open first chapter by default
+        if (document.getElementById('chapter-0')) {
+            toggleChapter('0');
+        }
+    </script>
+</body>
+</html>

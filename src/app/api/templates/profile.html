@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile - GYFT</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; max-width: 600px; margin: 40px auto; }
+        .profile-container { padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        h2 { text-align: center; color: #333; }
+        .profile-avatar { 
+            width: 120px; height: 120px; border-radius: 50%; background: #007bff;
+            color: white; display: flex; align-items: center; justify-content: center; 
+            font-size: 32px; margin: 0 auto 20px; font-weight: bold;
+            overflow: hidden; position: relative; cursor: pointer;
+        }
+        .profile-avatar img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .profile-avatar-initials {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .upload-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); color: white; display: none;
+            align-items: center; justify-content: center; font-size: 14px;
+            text-align: center; border-radius: 50%;
+        }
+        .profile-avatar:hover .upload-overlay {
+            display: flex;
+        }
+        .file-input-wrapper {
+            position: relative; overflow: hidden; display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute; left: -9999px;
+        }
+        .file-input-label {
+            display: inline-block; padding: 8px 16px; background: #28a745;
+            color: white; border-radius: 4px; cursor: pointer; margin-bottom: 10px;
+        }
+        .file-input-label:hover {
+            background: #218838;
+        }
+        .current-image {
+            max-width: 100px; max-height: 100px; border-radius: 8px; margin-top: 10px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; 
+                 border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button[type="button"] { background: #6c757d; }
+        button[type="button"]:hover { background: #545b62; }
+        .action-button { display: inline-block; padding: 10px 20px; margin: 5px; 
+                        background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .action-button:hover { background: #0056b3; }
+        .secondary-button { background: #6c757d; }
+        .secondary-button:hover { background: #545b62; }
+        .error { color: #dc3545; font-size: 14px; margin-top: 5px; }
+        .success { color: #28a745; padding: 10px; background: #d4edda; border-radius: 4px; margin-bottom: 15px; }
+        .profile-info p { margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .profile-info strong { color: #666; }
+        .buttons-container { text-align: center; margin-top: 20px; }
+        .view-mode { display: block; }
+        .edit-mode { display: none; }
+        small { color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h2>Profile</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="profile-avatar" onclick="document.getElementById('profile-pic-input').click();">
+            {% if user.profile_picture %}
+                <img src="/media/avatar/{{ user.id }}" alt="Profile Picture">
+            {% else %}
+                <div class="profile-avatar-initials">
+                    {{ user.first_name[0].upper() }}{{ user.last_name[0].upper() }}
+                </div>
+            {% endif %}
+            <div class="upload-overlay">
+                Click to<br>change photo
+            </div>
+        </div>
+        
+        <!-- VIEW MODE -->
+        <div id="view-mode" class="view-mode">
+            <div class="profile-info">
+                <h3>{{ user.first_name }} {{ user.last_name }}</h3>
+                <p><strong>Username:</strong> @{{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Bio:</strong> {{ user.bio if user.bio else 'No bio added yet.' }}</p>
+            </div>
+            
+            <div class="buttons-container">
+                <button class="action-button" onclick="toggleEdit()">Edit Profile</button>
+                <a href="/logout" class="action-button secondary-button">Logout</a>
+                <a href="/" class="action-button secondary-button">Home</a>
+            </div>
+        </div>
+        
+        <!-- EDIT MODE -->
+        <div id="edit-mode" class="edit-mode">
+            <form method="POST" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    <label>Profile Picture</label>
+                    <div class="file-input-wrapper">
+                        <label for="profile-pic-input" class="file-input-label">Choose New Photo</label>
+                        {{ form.profile_picture(id="profile-pic-input") }}
+                    </div>
+                    {% if form.profile_picture.errors %}
+                        {% for error in form.profile_picture.errors %}
+                            <div class="error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    <small>Accepted formats: JPG, JPEG, PNG. Images will be automatically resized and compressed.</small>
+                    {% if user.profile_picture %}
+                        <div>
+                            <img src="/media/avatar/{{ user.id }}" alt="Current Profile Picture" class="current-image">
+                            <p><small>Current profile picture</small></p>
+                            <button type="button" onclick="removeProfilePicture()" style="background: #dc3545; padding: 5px 10px; font-size: 12px;">Remove Current Picture</button>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>First Name</label>
+                    {{ form.first_name() }}
+                    {% if form.first_name.errors %}
+                        {% for error in form.first_name.errors %}
+                            <div class="error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>Last Name</label>
+                    {{ form.last_name() }}
+                    {% if form.last_name.errors %}
+                        {% for error in form.last_name.errors %}
+                            <div class="error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    {{ form.email() }}
+                    {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                            <div class="error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>Bio</label>
+                    {{ form.bio(rows="4") }}
+                    {% if form.bio.errors %}
+                        {% for error in form.bio.errors %}
+                            <div class="error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    <small>Maximum 500 characters</small>
+                </div>
+                
+                <button type="submit">Update Profile</button>
+                <button type="button" onclick="toggleEdit()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function toggleEdit() {
+            const viewMode = document.getElementById('view-mode');
+            const editMode = document.getElementById('edit-mode');
+            
+            if (viewMode.style.display === 'none') {
+                viewMode.style.display = 'block';
+                editMode.style.display = 'none';
+            } else {
+                viewMode.style.display = 'none';
+                editMode.style.display = 'block';
+            }
+        }
+        
+        // Preview selected image
+        document.getElementById('profile-pic-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Update the avatar preview
+                    const avatar = document.querySelector('.profile-avatar img');
+                    const initials = document.querySelector('.profile-avatar-initials');
+                    
+                    if (avatar) {
+                        avatar.src = e.target.result;
+                    } else if (initials) {
+                        // Create new img element and replace initials
+                        const newImg = document.createElement('img');
+                        newImg.src = e.target.result;
+                        newImg.alt = 'Profile Picture';
+                        initials.parentNode.replaceChild(newImg, initials);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Remove profile picture
+        function removeProfilePicture() {
+            if (confirm('Are you sure you want to remove your profile picture?')) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/profile';
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                // Add action field
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'remove_picture';
+                form.appendChild(actionInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+</body>
+</html>

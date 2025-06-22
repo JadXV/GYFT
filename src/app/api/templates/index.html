@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GYFT</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #333; }
+        a { display: inline-block; margin: 10px; padding: 10px 20px; 
+            background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        a:hover { background: #0056b3; }
+        .user-info { display: flex; align-items: center; margin-bottom: 20px; }
+        .user-avatar { 
+            width: 50px; height: 50px; border-radius: 50%; 
+            margin-right: 15px; background: #007bff; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; overflow: hidden;
+        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-details h2 { margin: 0; color: #333; }
+        .user-details p { margin: 5px 0; color: #666; }
+        .course-form { 
+            background: #f8f9fa; padding: 20px; border-radius: 8px; 
+            margin: 20px 0; max-width: 600px; 
+        }
+        .course-form h3 { margin-top: 0; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; 
+            border-radius: 4px; font-size: 16px; 
+        }
+        .btn { 
+            padding: 10px 20px; background: #007bff; color: white; 
+            border: none; border-radius: 4px; cursor: pointer; font-size: 16px; 
+        }
+        .btn:hover { background: #0056b3; }
+        .courses-section { margin-top: 30px; }
+        .course-card { 
+            background: white; border: 1px solid #ddd; border-radius: 8px; 
+            padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .course-card h4 { margin: 0 0 10px 0; color: #333; }
+        .course-card p { color: #666; margin-bottom: 15px; }
+        .course-meta { 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-size: 14px; color: #888; margin-bottom: 15px; 
+        }
+        .course-language { 
+            background: #e9ecef; padding: 4px 8px; border-radius: 4px; 
+            font-size: 12px; text-transform: uppercase; 
+        }
+        .alert { 
+            padding: 12px 20px; margin: 20px 0; border-radius: 4px; 
+        }
+        .alert.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>GYFT</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if current_user.is_authenticated %}
+        <div class="user-info">
+            <div class="user-avatar">
+                {% if current_user.profile_picture %}
+                    <img src="/media/avatar/{{ current_user.id }}" alt="Profile Picture">
+                {% else %}
+                    {{ current_user.first_name[0].upper() }}{{ current_user.last_name[0].upper() }}
+                {% endif %}
+            </div>
+            <div class="user-details">
+                <h2>Welcome, {{ current_user.first_name }}!</h2>
+                <p>@{{ current_user.username }}</p>
+            </div>
+        </div>
+        
+        <a href="/profile">Profile</a>
+        <a href="/logout">Logout</a>
+        
+        <!-- Course Creation Form -->
+        <div class="course-form">
+            <h3>Generate a New Course</h3>
+            <form method="POST" action="/generate_course">
+                {{ course_form.hidden_tag() }}
+                <div class="form-group">
+                    {{ course_form.topic.label(class="form-label") }}
+                    {{ course_form.topic(class="form-control", placeholder="e.g., Python for Beginners, Web Development, Machine Learning") }}
+                </div>
+                {{ course_form.submit(class="btn") }}
+            </form>
+        </div>
+        
+        <!-- User's Courses -->
+        <div class="courses-section">
+            <h3>Your Courses</h3>
+            {% if courses %}
+                {% for course in courses %}
+                    <div class="course-card">
+                        <div class="course-meta">
+                            <span class="course-language">{{ course.language or 'General' }}</span>
+                            <span>{{ course.created_at.strftime('%B %d, %Y') }}</span>
+                        </div>
+                        <h4>{{ course.title }}</h4>
+                        <p>{{ course.description[:200] }}{% if course.description|length > 200 %}...{% endif %}</p>
+                        <a href="/course/{{ course._id }}">View Course</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No courses yet. Generate your first course above!</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <a href="/account">Login/Register</a>
+    {% endif %}
+</body>
+</html>
