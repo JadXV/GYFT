@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GEMINI_API_KEY = "AIzaSyBr346pOwAb9qDIqaButgPNenYuDwsD2hg";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 function makeQuestions(prompt: string) {
@@ -48,6 +48,10 @@ Remember: Respond with ONLY \`\`\`json [your json array here] \`\`\` and nothing
 
 export async function POST(request: NextRequest) {
   try {
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });
+    }
+
     const body = await request.json();
     const { prompt } = body;
 
@@ -56,7 +60,6 @@ export async function POST(request: NextRequest) {
     }
 
     const trimmedPrompt = prompt.trim();
-    console.log(trimmedPrompt);
 
     const aiPrompt = makeQuestions(trimmedPrompt);
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GEMINI_API_KEY = "AIzaSyBr346pOwAb9qDIqaButgPNenYuDwsD2hg";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 function courseGen(prompt: string) {
@@ -133,6 +133,10 @@ Remember: Respond with ONLY \`\`\`json [your json here] \`\`\` and nothing else.
 
 export async function POST(request: NextRequest) {
   try {
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });
+    }
+
     const body = await request.json();
     const { prompt } = body;
 
@@ -160,7 +164,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('Gemini API Error:', response.status, response.statusText);
+      const errorBody = await response.text();
+      console.error('Error body:', errorBody);
+      throw new Error(`Gemini API error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
