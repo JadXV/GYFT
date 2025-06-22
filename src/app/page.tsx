@@ -75,7 +75,8 @@ export default function HomePage() {
             <Link href="/auth/signin">
               <Button
                 variant="outline"
-                className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 px-8 py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                size="lg"
+                className="px-8 py-3 text-lg"
               >
                 GET STARTED
               </Button>

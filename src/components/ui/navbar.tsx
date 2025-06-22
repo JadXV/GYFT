@@ -79,7 +79,7 @@ export default function Navbar() {
                 My Account
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-[#535353]" />
             <DropdownMenuItem 
               onClick={handleLogout}
               className="cursor-pointer hover:text-black hover:bg-white"

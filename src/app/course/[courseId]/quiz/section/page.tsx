@@ -1,8 +1,8 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { CircleQuestionMark, ArrowLeft, ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, RefreshCw, BookOpen } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 interface Question {
@@ -44,13 +44,16 @@ interface Course {
   user_id: string;
 }
 
-export default function Quiz() {
+export default function SectionQuiz() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const courseId = params.courseId as string;
+  const sectionTitle = searchParams.get('section');
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -75,7 +78,17 @@ export default function Quiz() {
       if (response.ok) {
         const data = await response.json();
         setCourse(data);
-        await generateQuestions(data);
+        
+        // Find the specific section
+        const allSections = data.chapters.flatMap((chapter: Chapter) => chapter.s);
+        const targetSection = allSections.find((section: Section) => section.t === sectionTitle);
+        
+        if (targetSection) {
+          setCurrentSection(targetSection);
+          await generateQuestionsForSection(targetSection);
+        } else {
+          setError('Section not found');
+        }
       } else {
         setError('Failed to load course');
       }
@@ -86,20 +99,16 @@ export default function Quiz() {
     }
   };
 
-  const generateQuestions = async (courseData: Course) => {
+  const generateQuestionsForSection = async (section: Section) => {
     setIsGenerating(true);
     try {
-      // Extract content from all sections
-      const allSections = courseData.chapters.flatMap(chapter => chapter.s);
-      const courseContent = allSections.map((section, index) => {
-        const sectionContent = section.c.map(block => {
-          if (block.type === 'p') return block.text;
-          if (block.type === 'code') return `\`\`\`${block.lang || ''}\n${block.code}\n\`\`\``;
-          return '';
-        }).join('\n');
-        
-        return `Section ${index + 1}: ${section.t}\n${sectionContent}`;
-      }).join('\n\n');
+      const sectionContent = section.c.map(block => {
+        if (block.type === 'p') return block.text;
+        if (block.type === 'code') return `\`\`\`${block.lang || ''}\n${block.code}\n\`\`\``;
+        return '';
+      }).join('\n');
+      
+      const prompt = `Section: ${section.t}\n${sectionContent}`;
 
       const response = await fetch('/api/ai/generate-questions', {
         method: 'POST',
@@ -107,7 +116,7 @@ export default function Quiz() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: courseContent
+          prompt: prompt
         }),
       });
 
@@ -115,8 +124,7 @@ export default function Quiz() {
         const data = await response.json();
         try {
           const parsedQuestions = JSON.parse(data.response);
-          // Limit to 3 questions and ensure they have the correct structure
-          const limitedQuestions = parsedQuestions.slice(0, 3).map((q: any, index: number) => ({
+          const validQuestions = parsedQuestions.slice(0, 3).map((q: any, index: number) => ({
             q: q.q || q.question || 'Question not available',
             a1: q.a1 || q.options?.[0] || 'Option 1',
             a2: q.a2 || q.options?.[1] || 'Option 2', 
@@ -125,7 +133,7 @@ export default function Quiz() {
             correct: q.correct || 'a1',
             part: index
           }));
-          setQuestions(limitedQuestions);
+          setQuestions(validQuestions);
         } catch (parseError) {
           console.error('Error parsing questions:', parseError);
           setError('Failed to generate valid questions');
@@ -195,7 +203,7 @@ export default function Quiz() {
       <div className="flex justify-center items-center min-h-screen bg-black text-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-xl">Loading course...</p>
+          <p className="text-xl">Loading section...</p>
         </div>
       </div>
     );
@@ -206,23 +214,24 @@ export default function Quiz() {
       <div className="flex justify-center items-center min-h-screen bg-black text-white">
         <div className="text-center">
           <RefreshCw className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-xl">Generating AI questions...</p>
-          <p className="text-gray-400 mt-2">This may take a few moments</p>
+          <p className="text-xl">Generating questions for section...</p>
+          <p className="text-gray-400 mt-2">"{sectionTitle}"</p>
         </div>
       </div>
     );
   }
 
-  if (error || !course || questions.length === 0) {
+  if (error || !course || !currentSection || questions.length === 0) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-400 mb-4">Error</h1>
-          <p className="text-gray-400 mb-6">{error || 'No questions available'}</p>
+          <p className="text-gray-400 mb-6">{error || 'Section not found or no questions available'}</p>
           <Button 
             onClick={() => router.push(`/course/${courseId}`)}
             className="bg-blue-600 hover:bg-blue-700"
           >
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Course
           </Button>
         </div>
@@ -243,7 +252,12 @@ export default function Quiz() {
       <div className="max-w-4xl w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">{course.title} - Quiz</h1>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <BookOpen className="h-6 w-6 text-blue-400" />
+            <h1 className="text-2xl font-bold">{currentSection.t}</h1>
+          </div>
+          <p className="text-gray-400 mb-4">Quiz for this section</p>
+          
           <div className="flex justify-between items-center text-sm text-gray-400">
             <span>Question {currentQuestion + 1} of {questions.length}</span>
             <span>Score: {score}/{questions.length}</span>
@@ -258,7 +272,7 @@ export default function Quiz() {
 
         {/* Question */}
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-bold mb-8 leading-relaxed">
+          <h2 className="text-xl font-bold mb-8 leading-relaxed">
             {currentQ.q}
           </h2>
         </div>
@@ -270,7 +284,7 @@ export default function Quiz() {
             const isSelected = selectedAnswer === index;
             const isCorrect = index === correctAnswerIndex;
             
-            let buttonClasses = `h-24 md:h-32 rounded-lg border-2 text-white font-bold text-lg md:text-xl transition-all duration-300 hover:shadow-xl ${colors.border} bg-slate-800/50 backdrop-blur-sm`;
+            let buttonClasses = `h-20 md:h-24 rounded-lg border-2 text-white font-bold text-base md:text-lg transition-all duration-300 hover:shadow-xl ${colors.border} bg-slate-800/50 backdrop-blur-sm`;
             
             if (!showAnswer) {
               buttonClasses += ` ${colors.hover} hover:bg-opacity-20 hover:shadow-lg`;
@@ -325,7 +339,7 @@ export default function Quiz() {
           {isQuizComplete && (
             <div className="text-center">
               <p className="text-xl font-bold mb-4">
-                Quiz Complete! Final Score: {score}/{questions.length}
+                Section Quiz Complete! Score: {score}/{questions.length}
               </p>
               <div className="flex gap-4">
                 <Button
@@ -334,13 +348,21 @@ export default function Quiz() {
                   className="px-6 py-3"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Restart Quiz
+                  Restart
+                </Button>
+                <Button
+                  onClick={() => router.push(`/course/${courseId}/quiz`)}
+                  variant="primary"
+                  className="px-6 py-3"
+                >
+                  Full Course Quiz
                 </Button>
                 <Button
                   onClick={() => router.push(`/course/${courseId}`)}
                   variant="default"
                   className="px-6 py-3"
                 >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Course
                 </Button>
               </div>

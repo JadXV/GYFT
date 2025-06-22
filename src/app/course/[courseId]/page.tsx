@@ -53,6 +53,8 @@ export default function CoursePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
+  const [allSections, setAllSections] = useState<Section[]>([]);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
 
   useEffect(() => {
@@ -63,6 +65,20 @@ export default function CoursePage() {
     }
   }, [status, router, courseId]);
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft' && currentSectionIndex > 0) {
+        navigateToSection('prev');
+      } else if (event.key === 'ArrowRight' && currentSectionIndex < allSections.length - 1) {
+        navigateToSection('next');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentSectionIndex, allSections.length]);
+
   const fetchCourse = async () => {
     setIsLoading(true);
     try {
@@ -70,8 +86,14 @@ export default function CoursePage() {
       if (response.ok) {
         const data = await response.json();
         setCourse(data);
-        if (data.chapters && data.chapters.length > 0 && data.chapters[0].s && data.chapters[0].s.length > 0) {
-          setSelectedSection(data.chapters[0].s[0]);
+        
+        // Flatten all sections from all chapters
+        const flatSections = data.chapters.flatMap((chapter: Chapter) => chapter.s);
+        setAllSections(flatSections);
+        
+        if (flatSections.length > 0) {
+          setSelectedSection(flatSections[0]);
+          setCurrentSectionIndex(0);
         }
       } else if (response.status === 404) {
         setError('Course not found');
@@ -87,6 +109,16 @@ export default function CoursePage() {
 
   const handleSectionSelect = (section: Section) => {
     setSelectedSection(section);
+    const index = allSections.findIndex(s => s.t === section.t);
+    setCurrentSectionIndex(index);
+  };
+
+  const navigateToSection = (direction: 'next' | 'prev') => {
+    const newIndex = direction === 'next' ? currentSectionIndex + 1 : currentSectionIndex - 1;
+    if (newIndex >= 0 && newIndex < allSections.length) {
+      setSelectedSection(allSections[newIndex]);
+      setCurrentSectionIndex(newIndex);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -113,7 +145,7 @@ export default function CoursePage() {
             <h1 className="text-2xl font-bold text-red-400 mb-4">Error</h1>
             <p className="text-slate-400 mb-6">{error || 'Course not found'}</p>
             <Link href="/dashboard">
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300">Back to Dashboard</Button>
+              <Button variant="primary">Back to Dashboard</Button>
             </Link>
           </div>
         </div>
@@ -126,11 +158,27 @@ export default function CoursePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 mt-[26px]">
         <div className="flex justify-between items-center mb-6">
           <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300">
+            <Button variant="outline" size="sm">
               ← Back to Dashboard
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-center flex-grow">{course?.title}</h1>
+          <div className="flex-grow text-center">
+            <h1 className="text-2xl font-bold mb-2">{course?.title}</h1>
+            {allSections.length > 0 && (
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-sm text-slate-400">Progress:</span>
+                <div className="w-48 bg-slate-700 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${((currentSectionIndex + 1) / allSections.length) * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-slate-400">
+                  {currentSectionIndex + 1}/{allSections.length}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -166,8 +214,8 @@ export default function CoursePage() {
             {selectedSection ? (
               <div className="bg-white/5 backdrop-blur-lg border border-white/20 rounded-xl p-8">
                 <h2 className="text-3xl font-bold mb-6">{selectedSection.t}</h2>
-                <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed ">
-                {selectedSection.c.map((block, index) => {
+                <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed mb-8">
+                {Array.isArray(selectedSection.c) ? selectedSection.c.map((block, index) => {
                       if (block.type === 'p') {
                         return <ReactMarkdown key={index} rehypePlugins={[rehypeHighlight]}>{block.text || ''}</ReactMarkdown>;
                       }
@@ -176,7 +224,41 @@ export default function CoursePage() {
                         return <ReactMarkdown key={index} rehypePlugins={[rehypeHighlight]}>{codeMarkdown}</ReactMarkdown>;
                       }
                       return null;
-                    })}
+                    }) : (
+                      <div className="text-slate-400">No content available for this section.</div>
+                    )}
+                </div>
+                
+                {/* Navigation Buttons */}
+                <div className="pt-6 border-t border-white/20">
+                  <div className="flex justify-between items-center mb-3 mt-6">
+                    <Button
+                      onClick={() => navigateToSection('prev')}
+                      disabled={currentSectionIndex === 0}
+                      variant="outline"
+                    >
+                      ← Previous Section
+                    </Button>
+                    
+                    <Link href={`/course/${courseId}/quiz/section?section=${encodeURIComponent(selectedSection.t)}`}>
+                      <Button variant="primary">
+                        Quiz This Section
+                      </Button>
+                    </Link>
+                    
+                    <Button
+                      onClick={() => navigateToSection('next')}
+                      disabled={currentSectionIndex === allSections.length - 1}
+                      variant="outline"
+                    >
+                      Next Section →
+                    </Button>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xs text-slate-400">
+                      Section {currentSectionIndex + 1} of {allSections.length} • Use ← → keys to navigate
+                    </span>
+                  </div>
                 </div>
               </div>
             ) : (

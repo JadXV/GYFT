@@ -167,22 +167,20 @@ export default function ProfilePage() {
               
               <div className="flex justify-center space-x-4">
                 <Button 
+                  variant="primary"
                   onClick={() => setIsEditing(true)}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Edit Profile
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => signOut({ callbackUrl: '/' })}
-                  className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300"
                 >
                   Logout
                 </Button>
                 <Link href="/dashboard">
                   <Button 
                     variant="outline"
-                    className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300"
                   >
                     Dashboard
                   </Button>
@@ -266,7 +264,6 @@ export default function ProfilePage() {
                     setError('');
                     setSuccess('');
                   }}
-                  className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300"
                 >
                   Cancel
                 </Button>

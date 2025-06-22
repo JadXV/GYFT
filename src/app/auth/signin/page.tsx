@@ -156,8 +156,9 @@ export default function AuthPage() {
               
               <Button
                 type="submit"
+                variant="primary"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                className="w-full"
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
@@ -253,8 +254,9 @@ export default function AuthPage() {
               
               <Button
                 type="submit"
+                variant="primary"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                className="w-full"
               >
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>

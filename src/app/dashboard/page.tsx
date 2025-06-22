@@ -179,8 +179,10 @@ export default function DashboardPage() {
                 </div>
                 <Button
                   type="submit"
+                  variant="primary"
+                  size="lg"
                   disabled={generating || !newCourseTopic.trim()}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold h-12 px-8 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="h-12 px-8"
                 >
                   {generating ? (
                     <>
