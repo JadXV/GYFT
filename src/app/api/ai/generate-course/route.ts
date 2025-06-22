@@ -10,6 +10,11 @@ You will be given a prompt that describes the course you need to write.
 
 CRITICAL: You MUST respond with ONLY valid JSON wrapped in \`\`\`json blocks. No other text before or after.
 For each course, you will create a w3school-style course outline with a title, description, language, and structured parts.
+
+A section's content, "c", MUST be an array of objects. Each object can be a paragraph or a code block.
+- For a paragraph, use: { "type": "p", "text": "your paragraph text here" }
+- For a code block, use: { "type": "code", "lang": "language-name", "code": "your code here" }
+
 Your task is to generate a course outline in JSON format with the following structure (This is an example of a Python course, the contents are single sentences, but you HAVE to write detailed explinations and examples):
 {
     "t": "Python for Beginners: A Comprehensive Introduction",
@@ -22,19 +27,24 @@ Your task is to generate a course outline in JSON format with the following stru
             "s": [
                 {
                     "t": "Introduction to Python",
-                    "c": "What is Python? Why learn Python? Applications of Python."
+                    "c": [
+                        { "type": "p", "text": "Python is a high-level, interpreted programming language known for its readability and simple syntax. It was created by Guido van Rossum and first released in 1991." },
+                        { "type": "p", "text": "It is used in web development, data science, artificial intelligence, and more. This section will introduce you to the fundamental concepts of Python." },
+                        { "type": "code", "lang": "python", "code": "print('Hello, World!')" },
+                        { "type": "p", "text": "The code above is a simple Python program that prints 'Hello, World!' to the console. The print() function is a built-in function that outputs text." }
+                    ]
                 },
                 {
                     "t": "Setting up your Environment",
-                    "c": "Installing Python, choosing an IDE (VS Code, PyCharm), running your first Python program."
+                    "c": [{ "type": "p", "text": "Installing Python, choosing an IDE (VS Code, PyCharm), running your first Python program."}]
                 },
                 {
                     "t": "Variables and Data Types",
-                    "c": "Understanding variables, assigning values, exploring integers, floats, strings, and booleans."
+                    "c": [{ "type": "p", "text": "Understanding variables, assigning values, exploring integers, floats, strings, and booleans."}]
                 },
                 {
                     "t": "Basic Operations",
-                    "c": "Performing arithmetic operations (+, -, *, /), string concatenation, and working with input."
+                    "c": [{"type": "p", "text": "Performing arithmetic operations (+, -, *, /), string concatenation, and working with input."}]
                 }
             ]
         },
@@ -44,19 +54,19 @@ Your task is to generate a course outline in JSON format with the following stru
             "s": [
                 {
                     "t": "Conditional Statements",
-                    "c": "Using \`if\`, \`elif\`, and \`else\` to make decisions based on conditions."
+                    "c": [{"type": "p", "text": "Using \`if\`, \`elif\`, and \`else\` to make decisions based on conditions."}]
                 },
                 {
                     "t": "For Loops",
-                    "c": "Iterating through sequences (lists, strings, ranges) using \`for\` loops."
+                    "c": [{"type": "p", "text": "Iterating through sequences (lists, strings, ranges) using \`for\` loops."}]
                 },
                 {
                     "t": "While Loops",
-                    "c": "Repeating code blocks as long as a condition is true using \`while\` loops."
+                    "c": [{"type": "p", "text": "Repeating code blocks as long as a condition is true using \`while\` loops."}]
                 },
                 {
                     "t": "Logical Operators",
-                    "c": "Combining conditions using \`and\`, \`or\`, and \`not\`."
+                    "c": [{"type": "p", "text": "Combining conditions using \`and\`, \`or\`, and \`not\`."}]
                 }
             ]
         },
@@ -66,19 +76,19 @@ Your task is to generate a course outline in JSON format with the following stru
             "s": [
                 {
                     "t": "Lists: Introduction",
-                    "c": "Creating lists, accessing elements, list slicing."
+                    "c": [{"type": "p", "text": "Creating lists, accessing elements, list slicing."}]
                 },
                 {
                     "t": "Lists: Operations",
-                    "c": "Appending, inserting, removing, sorting, and searching within lists."
+                    "c": [{"type": "p", "text": "Appending, inserting, removing, sorting, and searching within lists."}]
                 },
                 {
                     "t": "Dictionaries: Introduction",
-                    "c": "Creating dictionaries, adding key-value pairs, accessing values."
+                    "c": [{"type": "p", "text": "Creating dictionaries, adding key-value pairs, accessing values."}]
                 },
                 {
                     "t": "Dictionaries: Operations",
-                    "c": "Modifying, deleting, iterating through dictionaries."
+                    "c": [{"type": "p", "text": "Modifying, deleting, iterating through dictionaries."}]
                 }
             ]
         },
@@ -88,19 +98,19 @@ Your task is to generate a course outline in JSON format with the following stru
             "s": [
                 {
                     "t": "Defining Functions",
-                    "c": "Creating your own functions with parameters and return values."
+                    "c": [{"type": "p", "text": "Creating your own functions with parameters and return values."}]
                 },
                 {
                     "t": "Function Arguments",
-                    "c": "Passing arguments by position and keyword."
+                    "c": [{"type": "p", "text": "Passing arguments by position and keyword."}]
                 },
                 {
                     "t": "Built-in Functions",
-                    "c": "Exploring useful built-in functions like \`len()\`, \`range()\`, and \`sum()\`."
+                    "c": [{"type": "p", "text": "Exploring useful built-in functions like \`len()\`, \`range()\`, and \`sum()\`."}]
                 },
                 {
                     "t": "Modules",
-                    "c": "Importing and using external libraries like \`math\` and \`random\`."
+                    "c": [{"type": "p", "text": "Importing and using external libraries like \`math\` and \`random\`."}]
                 }
             ]
         }
@@ -171,4 +181,4 @@ export async function POST(request: NextRequest) {
     console.error('Error generating course:', error);
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
-} 
+}

@@ -11,9 +11,16 @@ import ReactMarkdown from 'react-markdown';
 // import 'highlight.js/styles/github-dark.css'; // or any theme you prefer
 import rehypeHighlight from 'rehype-highlight';
 
+interface ContentBlock {
+  type: 'p' | 'code';
+  text?: string;
+  lang?: string;
+  code?: string;
+}
+
 interface Section {
   t: string; // title
-  c: string; // content
+  c: ContentBlock[]; // content
 }
 
 interface Chapter {
@@ -160,9 +167,16 @@ export default function CoursePage() {
               <div className="bg-white/5 backdrop-blur-lg border border-white/20 rounded-xl p-8">
                 <h2 className="text-3xl font-bold mb-6">{selectedSection.t}</h2>
                 <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed ">
-                  <ReactMarkdown rehypePlugins={[rehypeHighlight]}>{
-                    selectedSection.c.replace(/^```markdown\n/, '').replace(/\n```$/, '')
-                  }</ReactMarkdown>
+                {selectedSection.c.map((block, index) => {
+                      if (block.type === 'p') {
+                        return <ReactMarkdown key={index} rehypePlugins={[rehypeHighlight]}>{block.text || ''}</ReactMarkdown>;
+                      }
+                      if (block.type === 'code' && block.code) {
+                        const codeMarkdown = `\`\`\`${block.lang || ''}\n${block.code}\n\`\`\``;
+                        return <ReactMarkdown key={index} rehypePlugins={[rehypeHighlight]}>{codeMarkdown}</ReactMarkdown>;
+                      }
+                      return null;
+                    })}
                 </div>
               </div>
             ) : (
